@@ -251,7 +251,7 @@ void RenderManagerGL2D::init(int xResolution, int yResolution, bool fullscreen)
 	glEnable(GL_TEXTURE_2D);
 
 	// Load background
-	SDL_Surface* bgSurface = loadSurface("backgrounds/strand2.bmp");
+	SDL_Surface* bgSurface = loadSurface("backgrounds/hsWorms.bmp");
 	BufferedImage* bgBufImage = new BufferedImage;
 	bgBufImage->w = getNextPOT(bgSurface->w);
 	bgBufImage->h = getNextPOT(bgSurface->h);

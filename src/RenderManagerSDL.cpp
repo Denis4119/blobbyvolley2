@@ -178,94 +178,80 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	mBallShadow = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 
-	// Load blobby and shadows surface
-	// Load streamed textures for coloring
+	// Load separate static images for Player 1 and Player 2
 	for (int i = 1; i <= 5; ++i)
 	{
-		// Load blobby surface
-		char filename[64];
-		sprintf(filename, "gfx/blobbym%d.bmp", i);
-		SDL_Surface* blobImage = loadSurface(filename);
-		SDL_Surface* formattedBlobImage = SDL_ConvertSurfaceFormat(blobImage, SDL_PIXELFORMAT_ABGR8888, 0);
-		SDL_FreeSurface(blobImage);
+		// Load Player 1
+		SDL_Surface* leftSurface = loadSurface("gfx/blobbym1l.bmp");
+		SDL_Surface* leftImage = SDL_ConvertSurfaceFormat(
+			leftSurface, SDL_PIXELFORMAT_ABGR8888, 0);
+		SDL_FreeSurface(leftSurface);
 
-		SDL_SetColorKey(formattedBlobImage, SDL_TRUE,
-				SDL_MapRGB(formattedBlobImage->format, 0, 0, 0));
-		for(int j = 0; j < formattedBlobImage->w * formattedBlobImage->h; j++)
+		SDL_SetColorKey(leftImage, SDL_TRUE,
+			SDL_MapRGB(leftImage->format, 0, 0, 0));
+
+		for (int j = 0; j < leftImage->w * leftImage->h; ++j)
 		{
-			SDL_Color* pixel = &(((SDL_Color*)formattedBlobImage->pixels)[j]);
+			SDL_Color* pixel = &(((SDL_Color*)leftImage->pixels)[j]);
 			if (!(pixel->r | pixel->g | pixel->b))
-			{
 				pixel->a = 0;
-			}
 		}
 
-		mStandardBlob.push_back(formattedBlobImage);
+		// Load Player 2
+		SDL_Surface* rightSurface = loadSurface("gfx/blobbym1r.bmp");
+		SDL_Surface* rightImage = SDL_ConvertSurfaceFormat(
+			rightSurface, SDL_PIXELFORMAT_ABGR8888, 0);
+		SDL_FreeSurface(rightSurface);
 
-		// Load blobby shadow surface
+		SDL_SetColorKey(rightImage, SDL_TRUE,
+			SDL_MapRGB(rightImage->format, 0, 0, 0));
+
+		for (int j = 0; j < rightImage->w * rightImage->h; ++j)
+		{
+			SDL_Color* pixel = &(((SDL_Color*)rightImage->pixels)[j]);
+			if (!(pixel->r | pixel->g | pixel->b))
+				pixel->a = 0;
+		}
+
+		// Keep the original surface for the existing data structure
+		mStandardBlob.push_back(leftImage);
+
+		// Create Player 1 texture
+		SDL_Texture* leftTexture = SDL_CreateTextureFromSurface(mRenderer, leftImage);
+		mLeftBlob.emplace_back(leftTexture, Color(255, 255, 255));
+
+		// Create Player 2 texture
+		SDL_Texture* rightTexture = SDL_CreateTextureFromSurface(mRenderer, rightImage);
+		mRightBlob.emplace_back(rightTexture, Color(255, 255, 255));
+
+		SDL_FreeSurface(rightImage);
+
+		// Keep original shadow loading
+		char filename[64];
 		sprintf(filename, "gfx/sch1%d.bmp", i);
+
 		SDL_Surface* blobShadow = loadSurface(filename);
-		SDL_Surface* formatedBlobShadowImage = SDL_ConvertSurfaceFormat(blobShadow, SDL_PIXELFORMAT_ABGR8888, 0);
+		SDL_Surface* formattedShadow = SDL_ConvertSurfaceFormat(
+			blobShadow, SDL_PIXELFORMAT_ABGR8888, 0);
 		SDL_FreeSurface(blobShadow);
 
-		SDL_SetSurfaceAlphaMod(formatedBlobShadowImage, 127);
-		SDL_SetColorKey(formatedBlobShadowImage, SDL_TRUE, SDL_MapRGB(formatedBlobShadowImage->format, 0, 0, 0));
-		for(int j = 0; j < formatedBlobShadowImage->w * formatedBlobShadowImage->h; j++)
+		SDL_SetSurfaceAlphaMod(formattedShadow, 127);
+		SDL_SetColorKey(formattedShadow, SDL_TRUE,
+			SDL_MapRGB(formattedShadow->format, 0, 0, 0));
+
+		for (int j = 0; j < formattedShadow->w * formattedShadow->h; ++j)
 		{
-			SDL_Color* pixel = &(((SDL_Color*)formatedBlobShadowImage->pixels)[j]);
-			if (!(pixel->r | pixel->g | pixel->b))
-			{
-				pixel->a = 0;
-			} else {
-				pixel->a = 127;
-			}
+			SDL_Color* pixel = &(((SDL_Color*)formattedShadow->pixels)[j]);
+			pixel->a = (!(pixel->r | pixel->g | pixel->b)) ? 0 : 127;
 		}
 
-		mStandardBlobShadow.push_back(formatedBlobShadowImage);
+		mStandardBlobShadow.push_back(formattedShadow);
 
-		// Prepare blobby textures
-		SDL_Texture* leftBlobTex = SDL_CreateTexture(mRenderer,
-				SDL_PIXELFORMAT_ABGR8888,
-				SDL_TEXTUREACCESS_STREAMING,
-				formattedBlobImage->w, formattedBlobImage->h);
-		SDL_SetTextureBlendMode(leftBlobTex, SDL_BLENDMODE_BLEND);
-		SDL_UpdateTexture(leftBlobTex, nullptr, formattedBlobImage->pixels, formattedBlobImage->pitch);
+		SDL_Texture* leftShadow = SDL_CreateTextureFromSurface(mRenderer, formattedShadow);
+		SDL_Texture* rightShadow = SDL_CreateTextureFromSurface(mRenderer, formattedShadow);
 
-		mLeftBlob.emplace_back(
-				leftBlobTex,
-				Color(255, 255, 255));
-
-		SDL_Texture* rightBlobTex = SDL_CreateTexture(mRenderer,
-				SDL_PIXELFORMAT_ABGR8888,
-				SDL_TEXTUREACCESS_STREAMING,
-				formattedBlobImage->w, formattedBlobImage->h);
-		SDL_SetTextureBlendMode(rightBlobTex, SDL_BLENDMODE_BLEND);
-		SDL_UpdateTexture(rightBlobTex, nullptr, formattedBlobImage->pixels, formattedBlobImage->pitch);
-
-		mRightBlob.emplace_back(
-				rightBlobTex,
-				Color(255, 255, 255));
-
-		// Prepare blobby shadow textures
-		SDL_Texture* leftBlobShadowTex = SDL_CreateTexture(mRenderer,
-				SDL_PIXELFORMAT_ABGR8888,
-				SDL_TEXTUREACCESS_STREAMING,
-				formatedBlobShadowImage->w, formatedBlobShadowImage->h);
-		SDL_SetTextureBlendMode(leftBlobShadowTex, SDL_BLENDMODE_BLEND);
-		mLeftBlobShadow.emplace_back(
-				leftBlobShadowTex,
-				Color(255, 255, 255));
-		SDL_UpdateTexture(leftBlobShadowTex, nullptr, formatedBlobShadowImage->pixels, formatedBlobShadowImage->pitch);
-
-		SDL_Texture* rightBlobShadowTex = SDL_CreateTexture(mRenderer,
-				SDL_PIXELFORMAT_ABGR8888,
-				SDL_TEXTUREACCESS_STREAMING,
-				formatedBlobShadowImage->w, formatedBlobShadowImage->h);
-		SDL_SetTextureBlendMode(rightBlobShadowTex, SDL_BLENDMODE_BLEND);
-		mRightBlobShadow.emplace_back(
-				rightBlobShadowTex,
-				Color(255, 255, 255));
-		SDL_UpdateTexture(rightBlobShadowTex, nullptr, formatedBlobShadowImage->pixels, formatedBlobShadowImage->pitch);
+		mLeftBlobShadow.emplace_back(leftShadow, Color(255, 255, 255));
+		mRightBlobShadow.emplace_back(rightShadow, Color(255, 255, 255));
 	}
 
 	// Load font
@@ -569,10 +555,10 @@ void RenderManagerSDL::drawBlob(const Vector2& pos, const Color& col)
 
 	static int toDraw = 0;
 
-	setBlobColor(toDraw, col);
+	// setBlobColor(toDraw, col);
 	/// \todo this recolores the current frame (0)
 	/// + shadows; that's not exactly what we want
-	colorizeBlobs(toDraw, 0);
+	//colorizeBlobs(toDraw, 0);
 
 
 	//  Second dirty workaround in the function to have the right position of blobs in the GUI
@@ -686,8 +672,8 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 	// update blob colors
 	int leftFrame = int(gameState.getBlobState(LEFT_PLAYER)) % 5;
 	int rightFrame = int(gameState.getBlobState(RIGHT_PLAYER)) % 5;
-	colorizeBlobs(LEFT_PLAYER, leftFrame);
-	colorizeBlobs(RIGHT_PLAYER, rightFrame);
+	//colorizeBlobs(LEFT_PLAYER, leftFrame);
+	//colorizeBlobs(RIGHT_PLAYER, rightFrame);
 
 	// Drawing left blob
 	position = blobRect(gameState.getBlobPosition(LEFT_PLAYER));
