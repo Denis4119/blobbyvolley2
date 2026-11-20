@@ -219,8 +219,7 @@ void RenderManagerGL2D::init(int xResolution, int yResolution, bool fullscreen)
 
 	// Set modesetting
 	Uint32 screenFlags = SDL_WINDOW_OPENGL;
-	if (fullscreen)
-		screenFlags |= SDL_WINDOW_FULLSCREEN;
+	screenFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
 	// Create window
 	mWindow = SDL_CreateWindow(AppTitle,

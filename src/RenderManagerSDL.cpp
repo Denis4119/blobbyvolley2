@@ -83,19 +83,8 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
 	// Set modesetting
-	Uint32 screenFlags = 0;
-#ifdef __SWITCH__
-	screenFlags |= SDL_WINDOW_FULLSCREEN;
-#else
-	if (fullscreen)
-	{
-		screenFlags |= SDL_WINDOW_FULLSCREEN;
-	}
-	else
-	{
-		screenFlags |= SDL_WINDOW_RESIZABLE;
-	}
-#endif
+	Uint32 screenFlags = SDL_WINDOW_FULLSCREEN_DESKTOP;	
+
 	// Create window
 	mWindow = SDL_CreateWindow(AppTitle,
 		SDL_WINDOWPOS_UNDEFINED,
